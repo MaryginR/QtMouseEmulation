@@ -5,7 +5,7 @@ std::chrono::steady_clock::time_point LastRawInputClick;
 bool EmulatingDetected = false;
 WINDOWPLACEMENT lastwp;
 
-// Функция для проверки состояния окна (перетаскивается ли оно или изменяются размеры)
+// Г”ГіГ­ГЄГ¶ГЁГї Г¤Г«Гї ГЇГ°Г®ГўГҐГ°ГЄГЁ Г±Г®Г±ГІГ®ГїГ­ГЁГї Г®ГЄГ­Г  (ГЇГҐГ°ГҐГІГ Г±ГЄГЁГўГ ГҐГІГ±Гї Г«ГЁ Г®Г­Г® ГЁГ«ГЁ ГЁГ§Г¬ГҐГ­ГїГѕГІГ±Гї Г°Г Г§Г¬ГҐГ°Г»)
 bool IsWindowDraggingOrResizing(HWND hwnd) {
     WINDOWPLACEMENT wp;
     wp.length = sizeof(WINDOWPLACEMENT);
@@ -27,7 +27,7 @@ bool IsWindowDraggingOrResizing(HWND hwnd) {
     return false;
 }
 
-// Функция проверки движения курсора
+// Г”ГіГ­ГЄГ¶ГЁГї ГЇГ°Г®ГўГҐГ°ГЄГЁ Г¤ГўГЁГ¦ГҐГ­ГЁГї ГЄГіГ°Г±Г®Г°Г 
 static void CheckCursor(HWND hwnd)
 {
     POINT CurrentCursorPos, LastCursorPos;
@@ -67,7 +67,7 @@ static void CheckCursor(HWND hwnd)
     }
 }
 
-// Подмененная оконная процедура для перехвата сообщений(сюда попадают все сообщения посланные в оконную процедуру, в отличие от фильтра для raw пакетов)
+// ГЏГ®Г¤Г¬ГҐГ­ГҐГ­Г­Г Гї Г®ГЄГ®Г­Г­Г Гї ГЇГ°Г®Г¶ГҐГ¤ГіГ°Г  Г¤Г«Гї ГЇГҐГ°ГҐГµГўГ ГІГ  Г±Г®Г®ГЎГ№ГҐГ­ГЁГ©(Г±ГѕГ¤Г  ГЇГ®ГЇГ Г¤Г ГѕГІ ГўГ±ГҐ Г±Г®Г®ГЎГ№ГҐГ­ГЁГї ГЇГ®Г±Г«Г Г­Г­Г»ГҐ Гў Г®ГЄГ®Г­Г­ГіГѕ ГЇГ°Г®Г¶ГҐГ¤ГіГ°Гі, Гў Г®ГІГ«ГЁГ·ГЁГҐ Г®ГІ ГґГЁГ«ГјГІГ°Г  Г¤Г«Гї raw ГЇГ ГЄГҐГІГ®Гў)
 LRESULT CALLBACK SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
     if (uMsg == WM_LBUTTONDOWN) {
         auto elapsedTicks = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - LastMouseMessage);
@@ -79,14 +79,14 @@ LRESULT CALLBACK SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
-// Функция для установки подмены оконной процедуры
+// Г”ГіГ­ГЄГ¶ГЁГї Г¤Г«Гї ГіГ±ГІГ Г­Г®ГўГЄГЁ ГЇГ®Г¤Г¬ГҐГ­Г» Г®ГЄГ®Г­Г­Г®Г© ГЇГ°Г®Г¶ГҐГ¤ГіГ°Г»
 void SubclassWindow(HWND hwnd) {
     if (!SetWindowSubclass(hwnd, SubclassProc, 1, 0)) {
         throw "Failed to subclass window";
     }
 }
 
-// Класс для обработки нативных событий Windows
+// ГЉГ«Г Г±Г± Г¤Г«Гї Г®ГЎГ°Г ГЎГ®ГІГЄГЁ Г­Г ГІГЁГўГ­Г»Гµ Г±Г®ГЎГ»ГІГЁГ© Windows
 class RawInputEventFilter : public QAbstractNativeEventFilter {
 public:
     bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override {
@@ -103,21 +103,21 @@ public:
                 RAWINPUT* raw = (RAWINPUT*)lpb;
 
                 if (raw->header.dwType == RIM_TYPEMOUSE) {
-                    if (raw->header.hDevice == 0x0000000000000000) { //Проверяем содержится ли что-то в заголовке устройства сформировавшего raw пакет
+                    if (raw->header.hDevice == 0x0000000000000000) { //ГЏГ°Г®ГўГҐГ°ГїГҐГ¬ Г±Г®Г¤ГҐГ°Г¦ГЁГІГ±Гї Г«ГЁ Г·ГІГ®-ГІГ® Гў Г§Г ГЈГ®Г«Г®ГўГЄГҐ ГіГ±ГІГ°Г®Г©Г±ГІГўГ  Г±ГґГ®Г°Г¬ГЁГ°Г®ГўГ ГўГёГҐГЈГ® raw ГЇГ ГЄГҐГІ
                         EmulatingDetected = true;
                     }
                     LastMouseMessage = std::chrono::steady_clock::now();
                 }
             }
             else if (msg->message == WM_LBUTTONDOWN) {
-                LastMouseMessage = std::chrono::steady_clock::now(); //Смотрим когда последний раз отправлялся raw пакет о нажатии ЛКМ
+                LastMouseMessage = std::chrono::steady_clock::now(); //Г‘Г¬Г®ГІГ°ГЁГ¬ ГЄГ®ГЈГ¤Г  ГЇГ®Г±Г«ГҐГ¤Г­ГЁГ© Г°Г Г§ Г®ГІГЇГ°Г ГўГ«ГїГ«Г±Гї raw ГЇГ ГЄГҐГІ Г® Г­Г Г¦Г ГІГЁГЁ Г‹ГЉГЊ
             }
         }
         return false;
     }
 };
 
-// Функция для регистрации устройства Raw Input
+// Г”ГіГ­ГЄГ¶ГЁГї Г¤Г«Гї Г°ГҐГЈГЁГ±ГІГ°Г Г¶ГЁГЁ ГіГ±ГІГ°Г®Г©Г±ГІГўГ  Raw Input
 static void RegisterRawInput(HWND hwnd) {
     RAWINPUTDEVICE rid = {};
     rid.usUsagePage = 0x01; // Generic desktop controls
@@ -132,7 +132,7 @@ static void RegisterRawInput(HWND hwnd) {
 
 static void ProtectQtWindow(HWND hwnd, QApplication& app)
 {
-    // Регистрируем Raw Input устройство
+    // ГђГҐГЈГЁГ±ГІГ°ГЁГ°ГіГҐГ¬ Raw Input ГіГ±ГІГ°Г®Г©Г±ГІГўГ®
     try {
         RegisterRawInput(hwnd);
     }
@@ -140,7 +140,7 @@ static void ProtectQtWindow(HWND hwnd, QApplication& app)
         throw e.what();
     }
 
-    // Устанавливаем подмену оконной процедуры для фильтрации сообщений без raw пакета
+    // Г“Г±ГІГ Г­Г ГўГ«ГЁГўГ ГҐГ¬ ГЇГ®Г¤Г¬ГҐГ­Гі Г®ГЄГ®Г­Г­Г®Г© ГЇГ°Г®Г¶ГҐГ¤ГіГ°Г» Г¤Г«Гї ГґГЁГ«ГјГІГ°Г Г¶ГЁГЁ Г±Г®Г®ГЎГ№ГҐГ­ГЁГ© ГЎГҐГ§ raw ГЇГ ГЄГҐГІГ 
     try {
         SubclassWindow(hwnd);
     }
@@ -148,11 +148,11 @@ static void ProtectQtWindow(HWND hwnd, QApplication& app)
         throw e.what();
     }
 
-    // Создаем и устанавливаем фильтр для нативных событий
+    // Г‘Г®Г§Г¤Г ГҐГ¬ ГЁ ГіГ±ГІГ Г­Г ГўГ«ГЁГўГ ГҐГ¬ ГґГЁГ«ГјГІГ° Г¤Г«Гї Г­Г ГІГЁГўГ­Г»Гµ Г±Г®ГЎГ»ГІГЁГ©
     RawInputEventFilter* filter = new RawInputEventFilter();
     app.installNativeEventFilter(filter);
 
-    // Запускаем поток для CheckCursor, для отслеживания манипуляций с курсором без отправки raw пакетов
+    // Г‡Г ГЇГіГ±ГЄГ ГҐГ¬ ГЇГ®ГІГ®ГЄ Г¤Г«Гї CheckCursor, Г¤Г«Гї Г®ГІГ±Г«ГҐГ¦ГЁГўГ Г­ГЁГї Г¬Г Г­ГЁГЇГіГ«ГїГ¶ГЁГ© Г± ГЄГіГ°Г±Г®Г°Г®Г¬ ГЎГҐГ§ Г®ГІГЇГ°Г ГўГЄГЁ raw ГЇГ ГЄГҐГІГ®Гў
     std::thread cursorCheckThread(CheckCursor, hwnd);
     cursorCheckThread.detach();
 }
