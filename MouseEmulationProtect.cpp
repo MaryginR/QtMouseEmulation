@@ -140,7 +140,7 @@ static void ProtectQtWindow(HWND hwnd, QApplication& app)
         throw e.what();
     }
 
-    // Устанавливаем подмену оконной процедуры
+    // Устанавливаем подмену оконной процедуры для фильтрации сообщений без raw пакета
     try {
         SubclassWindow(hwnd);
     }
