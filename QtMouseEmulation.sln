@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34221.43
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtMouseEmulation", "QtMouseEmulation.vcxproj", "{8B604F08-3264-4063-AF38-9DB0507A30C9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8B604F08-3264-4063-AF38-9DB0507A30C9}.Debug|x64.ActiveCfg = Debug|x64
+		{8B604F08-3264-4063-AF38-9DB0507A30C9}.Debug|x64.Build.0 = Debug|x64
+		{8B604F08-3264-4063-AF38-9DB0507A30C9}.Release|x64.ActiveCfg = Release|x64
+		{8B604F08-3264-4063-AF38-9DB0507A30C9}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {89B9FA67-F764-497C-B41B-B8AC20C53B31}
+	EndGlobalSection
+EndGlobal
