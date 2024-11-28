@@ -5,7 +5,7 @@ std::chrono::steady_clock::time_point LastRawInputClick;
 bool EmulatingDetected = false;
 WINDOWPLACEMENT lastwp;
 
-// Ôóíêöèÿ äëÿ ïðîâåðêè ñîñòîÿíèÿ îêíà (ïåðåòàñêèâàåòñÿ ëè îíî èëè èçìåíÿþòñÿ ðàçìåðû)
+// Функция для проверки состояния окна (перетаскивается ли оно или изменяются размеры)
 bool IsWindowDraggingOrResizing(HWND hwnd) {
     WINDOWPLACEMENT wp;
     wp.length = sizeof(WINDOWPLACEMENT);
@@ -27,7 +27,7 @@ bool IsWindowDraggingOrResizing(HWND hwnd) {
     return false;
 }
 
-// Ôóíêöèÿ ïðîâåðêè äâèæåíèÿ êóðñîðà
+// Функция проверки движения курсора
 static void CheckCursor(HWND hwnd)
 {
     POINT CurrentCursorPos, LastCursorPos;
@@ -67,7 +67,7 @@ static void CheckCursor(HWND hwnd)
     }
 }
 
-// Ïîäìåíåííàÿ îêîííàÿ ïðîöåäóðà äëÿ ïåðåõâàòà ñîîáùåíèé(ñþäà ïîïàäàþò âñå ñîîáùåíèÿ ïîñëàííûå â îêîííóþ ïðîöåäóðó, â îòëè÷èå îò ôèëüòðà äëÿ raw ïàêåòîâ)
+// Подмененная оконная процедура для перехвата сообщений(сюда попадают все сообщения посланные в оконную процедуру, в отличие от фильтра для raw пакетов)
 LRESULT CALLBACK SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
     if (uMsg == WM_LBUTTONDOWN) {
         auto elapsedTicks = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - LastMouseMessage);
@@ -79,14 +79,14 @@ LRESULT CALLBACK SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
-// Ôóíêöèÿ äëÿ óñòàíîâêè ïîäìåíû îêîííîé ïðîöåäóðû
+// Функция для установки подмены оконной процедуры
 void SubclassWindow(HWND hwnd) {
     if (!SetWindowSubclass(hwnd, SubclassProc, 1, 0)) {
         throw "Failed to subclass window";
     }
 }
 
-// Êëàññ äëÿ îáðàáîòêè íàòèâíûõ ñîáûòèé Windows
+// Класс для обработки нативных событий Windows
 class RawInputEventFilter : public QAbstractNativeEventFilter {
 public:
     bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) override {
@@ -103,21 +103,21 @@ public:
                 RAWINPUT* raw = (RAWINPUT*)lpb;
 
                 if (raw->header.dwType == RIM_TYPEMOUSE) {
-                    if (raw->header.hDevice == 0x0000000000000000) { //Ïðîâåðÿåì ñîäåðæèòñÿ ëè ÷òî-òî â çàãîëîâêå óñòðîéñòâà ñôîðìèðîâàâøåãî raw ïàêåò
+                    if (raw->header.hDevice == 0x0000000000000000) { //Проверяем содержится ли что-то в заголовке устройства сформировавшего raw пакет
                         EmulatingDetected = true;
                     }
                     LastMouseMessage = std::chrono::steady_clock::now();
                 }
             }
             else if (msg->message == WM_LBUTTONDOWN) {
-                LastMouseMessage = std::chrono::steady_clock::now(); //Ñìîòðèì êîãäà ïîñëåäíèé ðàç îòïðàâëÿëñÿ raw ïàêåò î íàæàòèè ËÊÌ
+                LastMouseMessage = std::chrono::steady_clock::now(); //Смотрим когда последний раз отправлялся raw пакет о нажатии ЛКМ
             }
         }
         return false;
     }
 };
 
-// Ôóíêöèÿ äëÿ ðåãèñòðàöèè óñòðîéñòâà Raw Input
+// Функция для регистрации устройства Raw Input
 static void RegisterRawInput(HWND hwnd) {
     RAWINPUTDEVICE rid = {};
     rid.usUsagePage = 0x01; // Generic desktop controls
@@ -132,7 +132,7 @@ static void RegisterRawInput(HWND hwnd) {
 
 static void ProtectQtWindow(HWND hwnd, QApplication& app)
 {
-    // Ðåãèñòðèðóåì Raw Input óñòðîéñòâî
+    // Регистрируем Raw Input устройство
     try {
         RegisterRawInput(hwnd);
     }
@@ -140,7 +140,7 @@ static void ProtectQtWindow(HWND hwnd, QApplication& app)
         throw e.what();
     }
 
-    // Óñòàíàâëèâàåì ïîäìåíó îêîííîé ïðîöåäóðû äëÿ ôèëüòðàöèè ñîîáùåíèé áåç raw ïàêåòà
+    // Устанавливаем подмену оконной процедуры для фильтрации сообщений без raw пакета
     try {
         SubclassWindow(hwnd);
     }
@@ -148,11 +148,11 @@ static void ProtectQtWindow(HWND hwnd, QApplication& app)
         throw e.what();
     }
 
-    // Ñîçäàåì è óñòàíàâëèâàåì ôèëüòð äëÿ íàòèâíûõ ñîáûòèé
+    // Создаем и устанавливаем фильтр для нативных событий
     RawInputEventFilter* filter = new RawInputEventFilter();
     app.installNativeEventFilter(filter);
 
-    // Çàïóñêàåì ïîòîê äëÿ CheckCursor, äëÿ îòñëåæèâàíèÿ ìàíèïóëÿöèé ñ êóðñîðîì áåç îòïðàâêè raw ïàêåòîâ
+    // Запускаем поток для CheckCursor, для отслеживания манипуляций с курсором без отправки raw пакетов
     std::thread cursorCheckThread(CheckCursor, hwnd);
     cursorCheckThread.detach();
 }
