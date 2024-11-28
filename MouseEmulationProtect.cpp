@@ -110,7 +110,7 @@ public:
                 }
             }
             else if (msg->message == WM_LBUTTONDOWN) {
-                LastMouseMessage = std::chrono::steady_clock::now(); //Смотрим когда пользователь последний раз нажимал левую кнопку мыши
+                LastMouseMessage = std::chrono::steady_clock::now(); //Смотрим когда последний раз отправлялся raw пакет о нажатии ЛКМ
             }
         }
         return false;
